@@ -185,7 +185,7 @@ while(cap.isOpened()):
                         del i   # free memory
 
                 if new == True:
-                    p = Person.MyPerson(pid, cx, cy, max_p_age)
+                    p = mPerson.MyPerson(pid, cx, cy, max_p_age)
                     persons.append(p)
                     pid += 1
             ################

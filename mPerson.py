@@ -80,8 +80,8 @@ class MyPerson:
                 ### Tracking Cross the line
                 #if self.tracks[-1][1] < mid_end and self.tracks[-2][1] >= mid_end:
                 #print "x: ", self.tracks[-1][0], " y: ", self.tracks[-1][1], " width: ", width, " height: ", height, "value: ", crossLineUpCheck(self.tracks[-1][0], self.tracks[-1][1], width, height)
-                if (crossLineUpCheck(self.tracks[-1][0], self.tracks[-1][1], width, height) < 0
-                    and crossLineUpCheck(self.tracks[-2][0], self.tracks[-2][1], width, height) > 0):
+                if (crossUpLimitCheck(self.tracks[-1][0], self.tracks[-1][1], width, height) < 0
+                    and crossUpLimitCheck(self.tracks[-2][0], self.tracks[-2][1], width, height) > 0):
                     state = '1'
                     self.dir = 'up'
                     return True
@@ -90,12 +90,13 @@ class MyPerson:
         else:
             return False
 
-    def going_DOWN(self, width, width):
+    def going_DOWN(self, width, height):
         if len(self.tracks) >=2:
             if self.state == '0':
                 #if self.tracks[-1][1] > mid_start and self.tracks[-2][1] <= mid_start:
-                if(crossLineDownCheck(self.tracks[-1][0], self.tracks[-1][1], width, height) > 0
-                    and crossLineDownCheck(self.tracks[-2][0], self.tracks[-2][1], width, height) < 0):
+                print "x: ", self.tracks[-1][0], " y: ", self.tracks[-1][1], " width: ", width, " height: ", height, "value: ", crossDownLimitCheck(self.tracks[-1][0], self.tracks[-1][1], width, height)
+                if(crossDownLimitCheck(self.tracks[-1][0], self.tracks[-1][1], width, height) > 0
+                    and crossDownLimitCheck(self.tracks[-2][0], self.tracks[-2][1], width, height) < 0):
                     state = '1'
                     self.dir = 'down'
                     return True
