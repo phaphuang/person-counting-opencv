@@ -1,19 +1,17 @@
 # Write in BGR space
 import numpy as np
 import cv2
-import Person
+import mPerson
 import time
 import argparse
 import imutils
 from imutils.video import FileVideoStream
 from imutils.video import FPS
 
-INST_WIDTH = 800
-INST_HEIGHT = 600
 # http://docs.opencv.org/master/d3/dc0/group__imgproc__shape.html#ga17ed9f5d79ae97bd4c7cf18403e1689a&gsc.tab=0
 # http://docs.opencv.org/master/d4/d73/tutorial_py_contours_begin.html#gsc.tab=0
 
-### Input and Output Counters
+### Init variables, Input and Output Counters
 cnt_up = 0
 cnt_down = 0
 
@@ -28,18 +26,40 @@ args = vars(ap.parse_args())
 cap = cv2.VideoCapture(args["video"])
 #cap = cv2.resize(cap, (400, 300))
 
-w = INST_WIDTH
-h = INST_HEIGHT
-frameArea = h*w
-areaTH = frameArea/250
+width = 800
+height = 600
+frameArea = height*width
+areaTH = frameArea/50
 print 'Area Threshold', areaTH
 
-### Line of up/down
-line_up = int(2*(h/5))
-line_down = int(3*(h/5))
+line_up = int(2*(height/5))
+line_down = int(3*(height/5))
 
-up_limit = int(1*(h/5))
-down_limit = int(4*(h/5))
+up_limit = int(1*(height/5))
+down_limit = int(4*(height/5))
+
+scaleH = height/3
+rangeScale = 20
+
+up_limit_x1 = 0
+up_limit_y1 = height-rangeScale
+up_limit_x2 = width
+up_limit_y2 = height-scaleH-2*rangeScale
+
+line_up_x1 = 0
+line_up_y1 = height
+line_up_x2 = width
+line_up_y2 = height-scaleH-rangeScale
+
+line_down_x1 = 50
+line_down_y1 = height
+line_down_x2 = width
+line_down_y2 = height-scaleH
+
+down_limit_x1 = 100
+down_limit_y1 = height
+down_limit_x2 = width
+down_limit_y2 = height-scaleH+rangeScale
 
 print "Blue line y:", str(line_down)
 print "Red line y:", str(line_up)
@@ -47,24 +67,24 @@ line_down_color = (255,0,0)
 line_up_color = (0,0,255)
 # Point = [x, y]
 # line_down
-pt1 = [50, h]
-pt2 = [w, h-200]
+pt1 = [line_down_x1, line_down_y1]
+pt2 = [line_down_x2, line_down_y2]
 pts_L1 = np.array([pt1,pt2], np.int32)
 pts_L1 = pts_L1.reshape((-1,1,2))
 # line_up
-pt3 = [0, h];
-pt4 = [w, h-220];
+pt3 = [line_up_x1, line_up_y1];
+pt4 = [line_up_x2, line_up_y2];
 pts_L2 = np.array([pt3, pt4], np.int32)
 pts_L2 = pts_L2.reshape((-1,1,2))
 
 # up_limit
-pt5 = [0, h-20]
-pt6 = [w, h-240]
+pt5 = [up_limit_x1, up_limit_y1]
+pt6 = [up_limit_x2, up_limit_y2]
 pts_L3 = np.array([pt5, pt6], np.int32)
 pts_L3 = pts_L3.reshape((-1,1,2))
 # down_limit
-pt7 = [100, h]
-pt8 = [w, h-180]
+pt7 = [down_limit_x1, down_limit_y1]
+pt8 = [down_limit_x2, down_limit_y2]
 pts_L4 = np.array([pt7, pt8], np.int32)
 pts_L4 = pts_L4.reshape((-1,1,2))
 
@@ -87,7 +107,7 @@ pid = 1
 while(cap.isOpened()):
     ### Read a frame
     ret, frame = cap.read()
-    frame = cv2.resize(frame, (INST_WIDTH, INST_HEIGHT))
+    frame = cv2.resize(frame, (width, height))
 
     for i in persons:
         i.age_one()     # age every person one frame
@@ -126,7 +146,7 @@ while(cap.isOpened()):
     for cnt in contours0:
         #cv2.drawContours(frame, cnt, -1, (0,255,0), 3, 8)
         area = cv2.contourArea(cnt)
-        print area
+        #print area
         if area > areaTH:
             #############
             #  TRACKING #
@@ -143,10 +163,11 @@ while(cap.isOpened()):
                     if abs(x-i.getX()) <= w and abs(y-i.getY()) <= h:
                         new = False
                         i.updateCoords(cx, cy)  ##Update coordinate of person and reset age
-                        if i.going_UP(line_down, line_up) == True:
+                        #if i.going_UP(line_down, line_up) == True:
+                        if i.going_UP(width, height) == True:
                             cnt_up += 1;
                             print "ID:", i.getId(), 'crossed going up at', time.strftime("%c")
-                        elif i.going_DOWN(line_down, line_up) == True:
+                        elif i.going_DOWN(width, height) == True:
                             cnt_down += 1;
                             print "ID:", i.getId(), 'crossed going down at', time.strftime("%c")
                         break
