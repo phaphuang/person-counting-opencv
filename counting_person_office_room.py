@@ -35,13 +35,13 @@ areaTH = frameArea/250
 print 'Area Threshold', areaTH
 
 ### Line of up/down
-line_up = int(3*(h/7))
-line_down = int(4*(h/7))
+line_up = int(2*(h/10))
+line_down = int(3*(h/10))
 
-line_mid = (line_up + line_down) / 2
+#line_mid = (line_up + line_down) / 2
 
-up_limit = int(2*(h/7))
-down_limit = int(5*(h/7))
+up_limit = int(1*(h/10))
+down_limit = int(4*(h/10))
 
 print "Blue line y:", str(line_down)
 print "Red line y:", str(line_up)
@@ -73,9 +73,9 @@ pts_L4 = pts_L4.reshape((-1,1,2))
 fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows = True)
 
 ### Create kernel for doing Opening and Closing operation
-kernelOp = np.ones((3,3), np.uint8)
-kernelOp2 = np.ones((5,5), np.uint8)
-kernelCl = np.ones((11,11), np.uint8)
+kernelOp = np.ones((5,5), np.uint8)
+#kernelOp2 = np.ones((5,5), np.uint8)
+kernelCl = np.ones((5,5), np.uint8)
 
 ### Define the minimum contours to detect the person and other Variables
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -84,10 +84,23 @@ max_p_age = 5
 pid = 1
 #areaTH = 500
 
+if cap.isOpened():
+    ret, image = cap.read()
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.resize(gray, (INST_WIDTH, INST_HEIGHT))
+    # Assign new height and width for ROI
+    (xr, yr, wr, hr) = cv2.boundingRect(gray)
+    startYROI = 2*hr/10
+    endYROI = hr-5*hr/20
+else:
+    print "Camera is not open"
+
 while(cap.isOpened()):
     ### Read a frame
     ret, frame = cap.read()
     frame = cv2.resize(frame, (INST_WIDTH, INST_HEIGHT))
+    cv2.rectangle(frame, (150, startYROI), (wr-300, endYROI), (0, 255, 0), 2)
+    roi_image = frame[startYROI:endYROI, 150:wr-300]
     #frame = cv2.GaussianBlur(frame,(3,3),0)
 
     for i in persons:
@@ -98,20 +111,21 @@ while(cap.isOpened()):
     #####################
 
     ### Use the substractor
-    fgmask = fgbg.apply(frame)
+    fgmask = fgbg.apply(roi_image)
     blur = cv2.medianBlur(fgmask, 5)
-    fgmask2 = fgbg.apply(frame)
+    blur = cv2.GaussianBlur(blur,(3,3),0)
+    #fgmask2 = fgbg.apply(frame)
     #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
 
     try:
-        ret, imBin = cv2.threshold(blur,127,255,cv2.THRESH_BINARY)
-        ret, imBin2 = cv2.threshold(fgmask2,200,255,cv2.THRESH_BINARY)
+        ret, imBin = cv2.threshold(fgmask,210,255,cv2.THRESH_BINARY)
+        #ret, imBin2 = cv2.threshold(fgmask2,200,255,cv2.THRESH_BINARY)
         ### Opening (erode->dilate) Removing noise
         mask = cv2.morphologyEx(imBin, cv2.MORPH_OPEN, kernelOp)
-        mask2 = cv2.morphologyEx(imBin2, cv2.MORPH_OPEN, kernelOp2)
+        #mask2 = cv2.morphologyEx(imBin2, cv2.MORPH_OPEN, kernelOp2)
         ### Closing (dilate->erode) Joining the white regions
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernelCl)
-        mask2 = cv2.morphologyEx(mask2, cv2.MORPH_CLOSE, kernelCl)
+        #mask2 = cv2.morphologyEx(mask2, cv2.MORPH_CLOSE, kernelCl)
         #cv2.imshow('Frame', frame)
         #cv2.imshow('Background Subtraction', fgmask)
         cv2.imshow('Morphology Extraction', mask)
@@ -172,8 +186,8 @@ while(cap.isOpened()):
             ################
             #   DRAWING    #
             ################
-            cv2.circle(frame, (cx, cy), 5, (0,0,255), -1)
-            img = cv2.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 2)
+            cv2.circle(roi_image, (cx, cy), 5, (0,0,255), -1)
+            img = cv2.rectangle(roi_image, (x, y), (x+w, y+h), (0,255,0), 2)
             #cv2.drawContours(frame, cnt, -1, (0,255,0), 3)
 
         #############################
@@ -186,23 +200,25 @@ while(cap.isOpened()):
             #    frame = cv2.polylqines(frame, [pts], False, i.getRGB())
             #if i.getId() == 9:
             #    print str(i.getX()), ',', str(i.getY())
-            cv2.putText(frame, str(i.getId()), (i.getX(), i.getY()), font, 0.3, i.getRGB(), 1, cv2.LINE_AA)
+            cv2.putText(roi_image, str(i.getId()), (i.getX(), i.getY()), font, 0.3, i.getRGB(), 1, cv2.LINE_AA)
 
         #############
         #   IMAGES  #
         #############
         str_up = 'UP: ' + str(cnt_up)
         str_down = 'DOWN: ' + str(cnt_down)
-        frame = cv2.polylines(frame, [pts_L1], False, line_down_color, thickness=2)
-        frame = cv2.polylines(frame, [pts_L2], False, line_up_color, thickness=2)
+        cv2.polylines(roi_image, [pts_L1], False, line_down_color, thickness=2)
+        cv2.polylines(roi_image, [pts_L2], False, line_up_color, thickness=2)
         # line limit
-        frame = cv2.polylines(frame, [pts_L3], False, (255,255,255), thickness=1)
-        frame = cv2.polylines(frame, [pts_L4], False, (255,255,255), thickness=1)
-        cv2.putText(frame, str_up, (10,40), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
-        cv2.putText(frame, str_up, (10,40), font, 0.5, (0,0,255), 1, cv2.LINE_AA)
-        cv2.putText(frame, str_down, (10,90), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
-        cv2.putText(frame, str_down, (10, 90), font, 0.5, (255,0,0), 1, cv2.LINE_AA)
-        cv2.imshow('Frame', frame)
+        cv2.polylines(roi_image, [pts_L3], False, (255,255,255), thickness=1)
+        cv2.polylines(roi_image, [pts_L4], False, (255,255,255), thickness=1)
+        cv2.putText(roi_image, str_up, (10,40), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(roi_image, str_up, (10,40), font, 0.5, (0,0,255), 1, cv2.LINE_AA)
+        cv2.putText(roi_image, str_down, (10,90), font, 0.5, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(roi_image, str_down, (10, 90), font, 0.5, (255,0,0), 1, cv2.LINE_AA)
+        #cv2.imshow('Frame', frame)
+
+        cv2.imshow("Region of Interest", roi_image)
 
     ### Abort and exit with 'q' or ESC ###
     if cv2.waitKey(1) & 0xff == ord('q'):
