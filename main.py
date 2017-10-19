@@ -18,14 +18,14 @@ cnt_up = 0
 cnt_down = 0
 
 # construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-v", "--video", required=True,
-    help="path to input video file")
-args = vars(ap.parse_args())
+#ap = argparse.ArgumentParser()
+#p.add_argument("-v", "--video", required=True,
+#    help="path to input video file")
+#args = vars(ap.parse_args())
 
 ### Open video file
 #cap = cv2.VideoCapture('src/cctv01.avi')
-cap = cv2.VideoCapture(args["video"])
+cap = cv2.VideoCapture('../src/peopleCounter.avi')
 #cap = cv2.resize(cap, (400, 300))
 
 w = INST_WIDTH
