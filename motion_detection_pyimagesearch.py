@@ -1,10 +1,9 @@
-# import the necessary packages
 import argparse
 import datetime
 import imutils
 import time
 import cv2
-import pPerson
+import Person
 import numpy as np
 
 # construct the argument parser and parse the arguments
@@ -13,18 +12,16 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="path to the video file")
 ap.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
 args = vars(ap.parse_args())
-
 # if the video argument is None, then we are reading from webcam
 if args.get("video", None) is None:
 	camera = cv2.VideoCapture(0)
 	time.sleep(0.25)
-
 # otherwise, we are reading from a video file
 else:
 	camera = cv2.VideoCapture(args["video"])
 """
 
-camera = cv2.VideoCapture('../src/mycctv01.avi')
+camera = cv2.VideoCapture('peopleCounter.avi')
 
 # initialize the first frame in the video stream
 firstFrame = None
@@ -46,8 +43,8 @@ line_down = int(3*(INST_HEIGHT/10))
 up_limit = int(1*(INST_HEIGHT/10))
 down_limit = int(4*(INST_HEIGHT/10))
 
-print "Blue line y:", str(line_down)
-print "Red line y:", str(line_up)
+print("Blue line y:", str(line_down))
+print("Red line y:", str(line_up))
 
 line_down_color = (255,0,0)
 line_up_color = (0,0,255)
@@ -58,8 +55,8 @@ pt2 = [INST_WIDTH, line_down]
 pts_L1 = np.array([pt1,pt2], np.int32)
 pts_L1 = pts_L1.reshape((-1,1,2))
 # line_up
-pt3 = [0, line_up];
-pt4 = [INST_WIDTH, line_up];
+pt3 = [0, line_up]
+pt4 = [INST_WIDTH, line_up]
 pts_L2 = np.array([pt3, pt4], np.int32)
 pts_L2 = pts_L2.reshape((-1,1,2))
 
@@ -77,11 +74,11 @@ if camera.isOpened():
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.resize(gray, (INST_WIDTH, INST_HEIGHT))
     # Assign new height and width for ROI
-    (xr, yr, wr, hr) = cv2.boundingRect(gray)
-    startYROI = 2*hr/10
-    endYROI = hr-5*hr/20
+    (xr, yr,wr, hr) = cv2.boundingRect(gray)
+    startYROI = int(2*hr/10)
+    endYROI = int(hr-5*hr/20)
 else:
-    print "Camera is not open"
+    print("Camera is not open")
 
 # loop over the frames of the video
 while True:
@@ -98,7 +95,7 @@ while True:
 	# resize the frame, convert it to grayscale, and blur it
     #frame = imutils.resize(frame, width=800)
     frame = cv2.resize(frame, (INST_WIDTH, INST_HEIGHT))
-    cv2.rectangle(frame, (150, startYROI), (wr-300, endYROI), (0, 255, 0), 2)
+    cv2.rectangle(frame, (150, startYROI, wr-300, endYROI), (0, 255, 0), 2)
     roi_image = frame[startYROI:endYROI, 150:wr-300]
     gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -120,12 +117,12 @@ while True:
 	# dilate the thresholded image to fill in holes, then find contours
 	# on thresholded image
     thresh = cv2.dilate(thresh, None, iterations=2)
-    _, cnts, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # loop over the contours
     for cnt in cnts:
 		# if the contour is too small, ignore it
 		#if cv2.contourArea(c) < args["min_area"]:
-        print cv2.contourArea(cnt)
+        print(cv2.contourArea(cnt))
         if cv2.contourArea(cnt) < 10000 or cv2.contourArea(cnt) > 30000:
             continue
 
@@ -146,11 +143,11 @@ while True:
                         new = False
                         i.updateCoords(cx, cy)  ##Update coordinate of person and reset age
                         if i.going_UP(line_down, line_up) == True:
-                            cnt_up += 1;
-                            print "ID:", i.getId(), 'crossed going up at', time.strftime("%c")
+                            cnt_up += 1
+                            print("ID:", i.getId(), 'crossed going up at', time.strftime("%c"))
                         elif i.going_DOWN(line_down, line_up) == True:
-                            cnt_down += 1;
-                            print "ID:", i.getId(), 'crossed going down at', time.strftime("%c")
+                            cnt_down += 1
+                            print("ID:", i.getId(), 'crossed going down at', time.strftime("%c"))
                         break
 
                     if i.getState() == '1':
@@ -166,7 +163,7 @@ while True:
                         del i   # free memory
 
                 if new == True:
-                    p = pPerson.MyPerson(pid, cx, cy, max_p_age)
+                    p = Person.MyPerson(pid, cx, cy, max_p_age)
                     persons.append(p)
                     pid += 1
             ################
@@ -215,7 +212,7 @@ while True:
     cv2.imshow("Thresh", thresh)
     cv2.imshow("Frame Delta", frameDelta)
 
-    if cv2.waitKey(1) & 0xff == ord('q'):
+    if cv2.waitKey(10) & 0xFF == ord('q'):
         break
 
 
